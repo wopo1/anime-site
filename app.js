@@ -585,14 +585,18 @@ async function ensureSeriesMetadata(series) {
       if (metadata.description) {
         series.description = metadata.description;
       }
-      if (metadata.title && series.title === series.normalizedTitle) {
+      if (metadata.title && normalizeTitle(series.title) === series.normalizedTitle) {
         series.title = metadata.title;
       }
+      series.metadataFetched = Boolean(series.cover || metadata.description);
+      series.metadataState = series.metadataFetched ? "ready" : "idle";
+    } else {
+      series.metadataFetched = false;
+      series.metadataState = "idle";
     }
-    series.metadataFetched = true;
-    series.metadataState = "ready";
   } catch {
     series.metadataState = "error";
+    series.metadataFetched = false;
   }
 
   saveLibrary();
@@ -600,6 +604,57 @@ async function ensureSeriesMetadata(series) {
 }
 
 async function fetchAnimeMetadata(title) {
+  const variants = buildSearchVariants(title);
+
+  for (const variant of variants) {
+    const bangumiMetadata = await fetchBangumiMetadata(variant);
+    if (bangumiMetadata?.coverImage || bangumiMetadata?.description) {
+      return bangumiMetadata;
+    }
+  }
+
+  for (const variant of variants) {
+    const anilistMetadata = await fetchAniListMetadata(variant);
+    if (anilistMetadata?.coverImage || anilistMetadata?.description) {
+      return anilistMetadata;
+    }
+  }
+
+  return null;
+}
+
+async function fetchBangumiMetadata(title) {
+  const response = await fetch("https://api.bgm.tv/v0/search/subjects", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      keyword: title,
+      sort: "match",
+      filter: {
+        type: [2]
+      }
+    })
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = await response.json();
+  const subject = payload?.data?.[0];
+  if (!subject) return null;
+
+  return {
+    title: subject.name_cn || subject.name || title,
+    description: cleanDescription(subject.summary),
+    coverImage: subject.images?.large || subject.images?.common || subject.images?.medium || subject.images?.small || ""
+  };
+}
+
+async function fetchAniListMetadata(title) {
   const query = `
     query ($search: String) {
       Media(search: $search, type: ANIME) {
@@ -632,7 +687,7 @@ async function fetchAnimeMetadata(title) {
   });
 
   if (!response.ok) {
-    throw new Error(`metadata request failed: ${response.status}`);
+    return null;
   }
 
   const payload = await response.json();
@@ -649,4 +704,26 @@ async function fetchAnimeMetadata(title) {
 function cleanDescription(description) {
   if (!description) return "";
   return description.replace(/<br\s*\/?>/gi, " ").replace(/<\/?[^>]+>/g, "").trim();
+}
+
+function buildSearchVariants(title) {
+  const variants = new Set();
+  const normalized = normalizeSeriesTitle(title);
+  variants.add(normalized);
+
+  const stripped = normalized
+    .replace(/\s*第\s*[0-9一二三四五六七八九十]+\s*(季|部)\s*$/i, "")
+    .replace(/\s*(第二季|第三季|第四季|最终季|剧场版|OVA|OAD|SP)\s*$/i, "")
+    .trim();
+
+  if (stripped) {
+    variants.add(stripped);
+  }
+
+  const compact = stripped.replace(/\s+/g, "");
+  if (compact) {
+    variants.add(compact);
+  }
+
+  return [...variants].filter(Boolean);
 }
