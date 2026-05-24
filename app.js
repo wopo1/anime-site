@@ -56,6 +56,8 @@ const els = {
   removeCurrent: document.querySelector("#removeCurrent"),
   currentEpisodeTitle: document.querySelector("#currentEpisodeTitle"),
   currentEpisodeMeta: document.querySelector("#currentEpisodeMeta"),
+  streamUrlInput: document.querySelector("#streamUrlInput"),
+  saveStreamUrl: document.querySelector("#saveStreamUrl"),
   dropZone: document.querySelector("#dropZone"),
   episodeList: document.querySelector("#episodeList"),
   episodeTemplate: document.querySelector("#episodeTemplate")
@@ -128,6 +130,22 @@ els.saveMeta.addEventListener("click", () => {
   render();
 });
 
+els.saveStreamUrl.addEventListener("click", () => {
+  const episode = getCurrentEpisode();
+  if (!episode) return;
+
+  const value = els.streamUrlInput.value.trim();
+  episode.streamUrl = value;
+  saveLibrary();
+
+  if (value) {
+    playEpisode(episode.id);
+  } else {
+    renderDetail();
+    renderEpisodes();
+  }
+});
+
 els.removeCurrent.addEventListener("click", () => {
   const series = getCurrentSeries();
   if (!series) return;
@@ -189,6 +207,7 @@ function addVideos(files) {
       title: parsed.episodeTitle,
       fileName: file.name,
       size: file.size,
+      streamUrl: "",
       progress: 0,
       lastTime: 0,
       order: parsed.order,
@@ -246,6 +265,7 @@ function playEpisode(id) {
 
   const file = sessionFiles.get(id);
   if (file) {
+    episode.sourceType = "file";
     if (els.player.dataset.objectUrl) {
       URL.revokeObjectURL(els.player.dataset.objectUrl);
     }
@@ -254,7 +274,17 @@ function playEpisode(id) {
     els.player.src = url;
     els.player.load();
     els.emptyPlayer.hidden = true;
+  } else if (episode.streamUrl) {
+    episode.sourceType = "url";
+    if (els.player.dataset.objectUrl) {
+      URL.revokeObjectURL(els.player.dataset.objectUrl);
+      delete els.player.dataset.objectUrl;
+    }
+    els.player.src = episode.streamUrl;
+    els.player.load();
+    els.emptyPlayer.hidden = true;
   } else {
+    episode.sourceType = "missing";
     els.player.removeAttribute("src");
     els.player.load();
     showImportMessage(text.needsFile, `${text.reimport}${episode.fileName}`);
@@ -345,10 +375,16 @@ function renderDetail() {
 
   if (episode) {
     els.currentEpisodeTitle.textContent = episode.title;
-    els.currentEpisodeMeta.textContent = `${series.title} - ${formatSize(episode.size)}`;
+    els.currentEpisodeMeta.textContent = `${series.title} - ${formatSize(episode.size)} - ${episode.streamUrl ? "\u94fe\u63a5\u6a21\u5f0f" : "\u672c\u5730\u6a21\u5f0f"}`;
+    els.streamUrlInput.value = episode.streamUrl || "";
+    els.streamUrlInput.disabled = false;
+    els.saveStreamUrl.disabled = false;
   } else {
     els.currentEpisodeTitle.textContent = text.noEpisode;
     els.currentEpisodeMeta.textContent = text.episodeHint;
+    els.streamUrlInput.value = "";
+    els.streamUrlInput.disabled = true;
+    els.saveStreamUrl.disabled = true;
   }
 }
 
@@ -376,7 +412,7 @@ function renderEpisodes() {
     const card = els.episodeTemplate.content.firstElementChild.cloneNode(true);
     card.classList.toggle("active", episode.id === state.currentEpisodeId);
     card.querySelector("h3").textContent = episode.title;
-    card.querySelector("p").textContent = `${statusLabel(series.status)} - ${formatSize(episode.size)}`;
+    card.querySelector("p").textContent = `${statusLabel(series.status)} - ${formatSize(episode.size)} - ${episode.streamUrl ? "\u94fe\u63a5\u53ef\u64ad" : "\u9700\u672c\u5730\u6587\u4ef6"}`;
     card.querySelector(".progress-bar span").style.width = `${Math.round((episode.progress || 0) * 100)}%`;
     card.querySelector(".episode-play").addEventListener("click", () => playEpisode(episode.id));
     els.episodeList.append(card);
@@ -418,6 +454,10 @@ function setEditingEnabled(enabled) {
   els.saveMeta.disabled = !enabled;
   els.removeCurrent.disabled = !enabled;
   els.coverInput.disabled = !enabled;
+  if (!enabled) {
+    els.streamUrlInput.disabled = true;
+    els.saveStreamUrl.disabled = true;
+  }
 }
 
 function updateEpisodeProgress(episode) {
@@ -526,7 +566,7 @@ function migrateLegacyLibrary() {
           title: parsed.seriesTitle,
           normalizedTitle: normalizeTitle(parsed.seriesTitle),
           cover: item.cover || "",
-          description: `\u4ece\u65e7\u7248\u7247\u5355\u8fc1\u79fb\u8fc7\u6765\u7684 ${parsed.seriesTitle}\u3002`,
+      description: `\u4ece\u65e7\u7248\u7247\u5355\u8fc1\u79fb\u8fc7\u6765\u7684 ${parsed.seriesTitle}\u3002`,
           status: item.status || "watching",
           metadataFetched: Boolean(item.cover),
           metadataState: item.cover ? "ready" : "idle",
@@ -541,6 +581,7 @@ function migrateLegacyLibrary() {
         title: parsed.episodeTitle,
         fileName: item.fileName || item.title,
         size: item.size || 0,
+        streamUrl: item.streamUrl || "",
         progress: item.progress || 0,
         lastTime: item.lastTime || 0,
         order: parsed.order,
