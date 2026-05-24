@@ -7,6 +7,9 @@ const text = {
   reimport: "\u6d4f\u89c8\u5668\u4e0d\u4f1a\u6c38\u4e45\u4fdd\u5b58\u5927\u89c6\u9891\u6587\u4ef6\uff0c\u8bf7\u518d\u6b21\u5bfc\u5165\uff1a",
   emptyFiltered: "\u6ca1\u6709\u5339\u914d\u7684\u5267\u96c6\u3002",
   emptyLibrary: "\u7247\u5355\u8fd8\u662f\u7a7a\u7684\u3002\u5bfc\u5165\u4e00\u4e9b\u89c6\u9891\u5f00\u59cb\u770b\u5427\u3002",
+  invalidSelection: "\u8fd9\u6b21\u9009\u4e2d\u7684\u6587\u4ef6\u6ca1\u6709\u88ab\u8bc6\u522b\u6210\u53ef\u64ad\u653e\u89c6\u9891\u3002\u8bf7\u4f18\u5148\u9009 MP4 \u6216 WebM\uff0cMKV \u9700\u8981\u6d4f\u89c8\u5668\u81ea\u5df1\u652f\u6301\u89e3\u7801\u3002",
+  playbackFailed: "\u8fd9\u4e2a\u89c6\u9891\u5df2\u5bfc\u5165\uff0c\u4f46\u5f53\u524d\u6d4f\u89c8\u5668\u65e0\u6cd5\u64ad\u653e\u5b83\u3002",
+  playbackHelp: "\u8bf7\u6362\u6210 MP4\uff08H.264\uff09\u6216 WebM\uff0c\u6216\u8005\u6539\u7528\u672c\u673a Chrome / Edge \u6253\u5f00\u518d\u8bd5\u3002",
   unknownSize: "\u672a\u77e5\u5927\u5c0f",
   statuses: {
     watching: "\u8ffd\u756a\u4e2d",
@@ -77,6 +80,15 @@ els.player.addEventListener("loadedmetadata", () => {
   }
 });
 
+els.player.addEventListener("error", () => {
+  const episode = getCurrentEpisode();
+  if (!episode) return;
+
+  els.emptyPlayer.hidden = false;
+  els.emptyPlayer.querySelector("strong").textContent = text.playbackFailed;
+  els.emptyPlayer.querySelector("span").textContent = `${text.playbackHelp} (${episode.fileName})`;
+});
+
 els.searchInput.addEventListener("input", event => {
   state.query = event.target.value.trim().toLowerCase();
   renderList();
@@ -133,12 +145,15 @@ els.removeCurrent.addEventListener("click", () => {
 });
 
 els.dropZone.addEventListener("drop", event => {
-  addVideos([...event.dataTransfer.files].filter(file => file.type.startsWith("video/")));
+  addVideos([...event.dataTransfer.files]);
 });
 
 function addVideos(files) {
-  const videoFiles = files.filter(file => file.type.startsWith("video/"));
-  if (!videoFiles.length) return;
+  const videoFiles = files.filter(isVideoFile);
+  if (!videoFiles.length) {
+    showImportMessage(text.invalidSelection, text.importHelp);
+    return;
+  }
 
   videoFiles.forEach(file => {
     const id = crypto.randomUUID();
@@ -256,12 +271,16 @@ function clearPlayer() {
   els.player.pause();
   els.player.removeAttribute("src");
   els.player.load();
-  els.emptyPlayer.hidden = false;
-  els.emptyPlayer.querySelector("strong").textContent = text.importPrompt;
-  els.emptyPlayer.querySelector("span").textContent = text.importHelp;
+  showImportMessage(text.importPrompt, text.importHelp);
   els.currentTitle.textContent = text.noSelection;
   els.titleEdit.value = "";
   setEditingEnabled(false);
+}
+
+function showImportMessage(title, detail) {
+  els.emptyPlayer.hidden = false;
+  els.emptyPlayer.querySelector("strong").textContent = title;
+  els.emptyPlayer.querySelector("span").textContent = detail;
 }
 
 function setEditingEnabled(enabled) {
@@ -310,6 +329,11 @@ function fileToDataUrl(file) {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function isVideoFile(file) {
+  if (file.type && file.type.startsWith("video/")) return true;
+  return /\.(mp4|webm|mkv|mov|m4v|avi)$/i.test(file.name);
 }
 
 function loadLibrary() {
