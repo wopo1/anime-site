@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Anime Shelf</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Local anime library</p>
+        <h1>Anime Shelf</h1>
+      </div>
+      <div class="topbar-actions">
+        <label class="icon-button" title="&#23548;&#20837;&#35270;&#39057;">
+          <span aria-hidden="true">+</span>
+          <input id="videoInput" type="file" accept="video/*" multiple>
+        </label>
+        <label class="icon-button" title="&#23548;&#20837;&#23553;&#38754;">
+          <span aria-hidden="true">C</span>
+          <input id="coverInput" type="file" accept="image/*">
+        </label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="watch-panel" aria-label="&#25773;&#25918;&#22120;">
+        <div class="player-shell">
+          <video id="player" controls playsinline></video>
+          <div id="emptyPlayer" class="empty-player">
+            <strong>&#25226;&#21160;&#28459;&#25991;&#20214;&#25302;&#36827;&#26469;&#65292;&#25110;&#32773;&#28857;&#21491;&#19978;&#35282; + &#23548;&#20837;&#12290;</strong>
+            <span>&#25903;&#25345;&#27983;&#35272;&#22120;&#33021;&#25773;&#25918;&#30340; MP4&#12289;WebM&#12289;MKV &#31561;&#26684;&#24335;&#65307;&#25152;&#26377;&#20869;&#23481;&#21482;&#22312;&#26412;&#26426;&#20351;&#29992;&#12290;</span>
+          </div>
+        </div>
+
+        <div class="now-playing">
+          <div>
+            <p class="eyebrow">Now watching</p>
+            <h2 id="currentTitle">&#36824;&#27809;&#26377;&#36873;&#25321;&#21095;&#38598;</h2>
+          </div>
+          <button id="removeCurrent" class="ghost-button" type="button" disabled>&#31227;&#38500;</button>
+        </div>
+
+        <div class="episode-tools">
+          <input id="titleEdit" type="text" placeholder="&#32473;&#24403;&#21069;&#21095;&#38598;&#25913;&#20010;&#26631;&#39064;" disabled>
+          <select id="statusSelect" disabled>
+            <option value="watching">&#36861;&#30058;&#20013;</option>
+            <option value="done">&#24050;&#30475;&#23436;</option>
+            <option value="planned">&#24819;&#30475;</option>
+          </select>
+          <button id="saveMeta" type="button" disabled>&#20445;&#23384;</button>
+        </div>
+      </section>
+
+      <aside class="library" aria-label="&#30058;&#21095;&#24211;">
+        <div class="library-head">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h2>&#25105;&#30340;&#29255;&#21333;</h2>
+          </div>
+          <span id="libraryCount" class="count">0</span>
+        </div>
+
+        <div class="filters">
+          <input id="searchInput" type="search" placeholder="&#25628;&#32034;&#26631;&#39064;">
+          <div class="segmented" role="group" aria-label="&#31579;&#36873;&#29366;&#24577;">
+            <button class="active" type="button" data-filter="all">&#20840;&#37096;</button>
+            <button type="button" data-filter="watching">&#36861;&#30058;</button>
+            <button type="button" data-filter="done">&#30475;&#23436;</button>
+            <button type="button" data-filter="planned">&#24819;&#30475;</button>
+          </div>
+        </div>
+
+        <div id="dropZone" class="drop-zone">
+          <span>&#25302;&#25341;&#35270;&#39057;&#21040;&#36825;&#37324;&#23548;&#20837;</span>
+        </div>
+
+        <div id="episodeList" class="episode-list"></div>
+      </aside>
+    </main>
+
+    <template id="episodeTemplate">
+      <article class="episode-card">
+        <button class="cover" type="button" aria-label="&#25773;&#25918;">
+          <img alt="">
+          <span class="play-mark">&gt;</span>
+        </button>
+        <div class="episode-info">
+          <h3></h3>
+          <p></p>
+          <div class="progress-bar"><span></span></div>
+        </div>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

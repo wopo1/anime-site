@@ -1,0 +1,397 @@
+:root {
+  color-scheme: dark;
+  --bg: #101114;
+  --panel: #181a20;
+  --panel-soft: #20242b;
+  --text: #f4f0e8;
+  --muted: #9da3ad;
+  --line: #303642;
+  --accent: #ff6b6b;
+  --accent-2: #4cc9a7;
+  --focus: #ffd166;
+  font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 107, 107, 0.15), transparent 30rem),
+    linear-gradient(135deg, #101114 0%, #171922 52%, #11181a 100%);
+  color: var(--text);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem clamp(1rem, 3vw, 2.5rem);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.eyebrow {
+  margin: 0 0 0.3rem;
+  color: var(--accent-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(1.7rem, 3vw, 2.7rem);
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.icon-button,
+button {
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 8px;
+  font-size: 1.5rem;
+}
+
+.icon-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 28rem);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.watch-panel,
+.library {
+  min-width: 0;
+}
+
+.player-shell {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #06070a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #050609;
+}
+
+.empty-player {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  text-align: center;
+  background:
+    linear-gradient(rgba(8, 9, 12, 0.72), rgba(8, 9, 12, 0.88)),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 18px);
+}
+
+.empty-player span {
+  color: var(--muted);
+}
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.now-playing h2 {
+  margin-bottom: 0;
+  font-size: clamp(1.25rem, 2vw, 2rem);
+}
+
+.ghost-button {
+  min-width: 4.5rem;
+  height: 2.35rem;
+  border-radius: 8px;
+}
+
+.episode-tools,
+.filters {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.episode-tools {
+  grid-template-columns: minmax(0, 1fr) 8rem 5rem;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 2.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 0.85rem;
+}
+
+input:focus,
+select:focus,
+button:focus-visible,
+.icon-button:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+#saveMeta {
+  border-radius: 8px;
+  background: var(--accent);
+  border-color: transparent;
+  font-weight: 700;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.library {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(24, 26, 32, 0.82);
+  padding: 1rem;
+}
+
+.library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.library-head h2 {
+  margin-bottom: 0;
+}
+
+.count {
+  display: grid;
+  place-items: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--accent);
+  font-weight: 800;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.segmented button {
+  min-height: 2.3rem;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmented button.active {
+  background: var(--accent-2);
+  color: #07100e;
+  font-weight: 800;
+}
+
+.drop-zone {
+  display: grid;
+  place-items: center;
+  min-height: 4rem;
+  margin: 1rem 0;
+  border: 1px dashed #59606d;
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.drop-zone.dragging {
+  border-color: var(--accent-2);
+  color: var(--text);
+  background: rgba(76, 201, 167, 0.1);
+}
+
+.episode-list {
+  display: grid;
+  gap: 0.75rem;
+  max-height: calc(100vh - 20rem);
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.episode-card {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.episode-card.active {
+  border-color: var(--accent-2);
+}
+
+.cover {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2d3340, #111318);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover img[src=""] {
+  display: none;
+}
+
+.play-mark {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.68);
+  font-size: 0.75rem;
+}
+
+.episode-info {
+  min-width: 0;
+}
+
+.episode-info h3 {
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.episode-info p {
+  margin-bottom: 0.7rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.progress-bar {
+  overflow: hidden;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #303642;
+}
+
+.progress-bar span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: var(--accent-2);
+}
+
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .episode-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .episode-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .episode-card {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+
+  .segmented {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .segmented button:nth-child(2) {
+    border-right: 0;
+  }
+
+  .segmented button:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+}
