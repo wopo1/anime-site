@@ -134,6 +134,10 @@ video {
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 18px);
 }
 
+.empty-player[hidden] {
+  display: none !important;
+}
+
 .empty-player span {
   color: var(--muted);
 }
