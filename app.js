@@ -24,6 +24,7 @@ const text = {
 
 const storageKey = "anime-shelf-library-v2";
 const legacyStorageKey = "anime-shelf-library";
+const animeApiUrl = "https://graphql.anilist.co";
 const sessionFiles = new Map();
 
 const state = {
@@ -61,6 +62,7 @@ const els = {
 };
 
 initializeState();
+hydrateMissingMetadata();
 render();
 
 els.videoInput.addEventListener("change", event => {
@@ -222,11 +224,14 @@ function findOrCreateSeries(title) {
     cover: "",
     description: `\u5f53\u524d\u6536\u5f55 ${title} \u7684\u672c\u5730\u5267\u96c6\u3002`,
     status: "watching",
+    metadataFetched: false,
+    metadataState: "idle",
     updatedAt: Date.now(),
     episodes: []
   };
 
   state.library.unshift(series);
+  void ensureSeriesMetadata(series);
   return series;
 }
 
@@ -265,6 +270,8 @@ async function setSeriesCover(seriesId, file) {
   if (!series) return;
 
   series.cover = await fileToDataUrl(file);
+  series.metadataFetched = true;
+  series.metadataState = "ready";
   saveLibrary();
   render();
 }
@@ -521,6 +528,8 @@ function migrateLegacyLibrary() {
           cover: item.cover || "",
           description: `\u4ece\u65e7\u7248\u7247\u5355\u8fc1\u79fb\u8fc7\u6765\u7684 ${parsed.seriesTitle}\u3002`,
           status: item.status || "watching",
+          metadataFetched: Boolean(item.cover),
+          metadataState: item.cover ? "ready" : "idle",
           updatedAt: item.addedAt || Date.now(),
           episodes: []
         };
@@ -551,4 +560,93 @@ function migrateLegacyLibrary() {
 
 function saveLibrary() {
   localStorage.setItem(storageKey, JSON.stringify(state.library));
+}
+
+function hydrateMissingMetadata() {
+  state.library.forEach(series => {
+    if (!series.cover || !series.metadataFetched) {
+      void ensureSeriesMetadata(series);
+    }
+  });
+}
+
+async function ensureSeriesMetadata(series) {
+  if (!series || series.metadataState === "loading" || series.metadataFetched) return;
+
+  series.metadataState = "loading";
+  saveLibrary();
+
+  try {
+    const metadata = await fetchAnimeMetadata(series.title);
+    if (metadata) {
+      if (!series.cover && metadata.coverImage) {
+        series.cover = metadata.coverImage;
+      }
+      if (metadata.description) {
+        series.description = metadata.description;
+      }
+      if (metadata.title && series.title === series.normalizedTitle) {
+        series.title = metadata.title;
+      }
+    }
+    series.metadataFetched = true;
+    series.metadataState = "ready";
+  } catch {
+    series.metadataState = "error";
+  }
+
+  saveLibrary();
+  render();
+}
+
+async function fetchAnimeMetadata(title) {
+  const query = `
+    query ($search: String) {
+      Media(search: $search, type: ANIME) {
+        title {
+          romaji
+          english
+          native
+        }
+        description(asHtml: false)
+        coverImage {
+          extraLarge
+          large
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(animeApiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      query,
+      variables: {
+        search: title
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`metadata request failed: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const media = payload?.data?.Media;
+  if (!media) return null;
+
+  return {
+    title: media.title?.native || media.title?.romaji || media.title?.english || title,
+    description: cleanDescription(media.description),
+    coverImage: media.coverImage?.extraLarge || media.coverImage?.large || ""
+  };
+}
+
+function cleanDescription(description) {
+  if (!description) return "";
+  return description.replace(/<br\s*\/?>/gi, " ").replace(/<\/?[^>]+>/g, "").trim();
 }
